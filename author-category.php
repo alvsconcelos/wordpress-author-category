@@ -294,11 +294,32 @@ if (!class_exists('author_category')){
         public function save_extra_user_profile_fields( $user_id ) {
             //only admin can see and save the categories
             if ( !current_user_can( 'manage_options') ) { return false; }
-
+            // dd($_POST);
             update_user_meta( $user_id, '_author_cat', $_POST['author_cat'] );
-                                                                                
-            if (isset($_POST['author_cat_clear']) && $_POST['author_cat_clear'] == 1)
+
+            // Delete user from term meta
+
+            $args = array(
+                'meta_key'               => 'category_user',
+                'meta_value'             => $user_id
+            );
+
+            $term_query = new WP_Term_Query( $args );
+
+            if ( ! empty( $term_query ) && ! is_wp_error( $term_query ) ) {
+                foreach($term_query->get_terms() as $term){ 
+                    delete_term_meta( $term->term_id, 'category_user');
+                }
+            }            
+
+            foreach ($_POST['author_cat'] as $term_id) {
+                add_term_meta ($term_id, 'category_user', $user_id);
+            }
+
+            if (isset($_POST['author_cat_clear']) && $_POST['author_cat_clear'] == 1) {
                 delete_user_meta( $user_id, '_author_cat' );
+            }
+                
         }
 
         /**
